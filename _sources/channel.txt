@@ -1,0 +1,33 @@
+Channels
+========
+
+*Channels* are integrations with external services that can act as
+:doc:`trigger` or :doc:`action` in a :doc:`receipt`.
+
+Developing a channel
+--------------------
+
+First of all a channel must inherit the core.Channel class and implement its
+methods. But there are a few more things to consider.
+
+URL endpoints
+"""""""""""""
+
+Every channel will need some way to authenticate the user against the external
+service. Therefore it should have a view called ``authenticate``. It is
+recommended to call this url endpoint ``/authenticate`` but it does not
+necessarily need to, since internal linking is done via django url aliases::
+
+    # urls.py
+
+    # Don't forget the appname!
+    app_name="channel_instagram"
+
+    urlpatterns = [
+        url(r'^authenticate', views.AuthView.as_view(), name='authenticate'),
+        ...
+    ]
+
+
+
+
