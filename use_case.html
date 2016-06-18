@@ -1,0 +1,247 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Use Case &mdash; daisychain.me 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="daisychain.me 0.1 documentation" href="index.html" />
+    <link rel="prev" title="Channels" href="channel.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="channel.html" title="Channels"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">daisychain.me 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="use-case">
+<h1>Use Case<a class="headerlink" href="#use-case" title="Permalink to this headline">¶</a></h1>
+<p>Diese Use Case Beschreibung stellt exemplarisch alle notwendigen Schritte da,
+die nötig sind, um von einer frisch installierten Daisychain-Instanz ausgehend
+ein Rezept auszuführen, dass bei jedem neuen Instagram-Foto dieses Foto
+inklusive Beschreibung auf Twitter postet.</p>
+<div class="section" id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p class="first">Installiere Instagram-Channel:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">c</span> <span class="o">=</span> <span class="n">Channel</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;instagram&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="n">t1</span> <span class="o">=</span> <span class="n">Trigger</span><span class="p">(</span><span class="n">channel</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">trigger_type</span><span class="o">=</span><span class="n">TRIGGER_NEW_PHOTO</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="n">t2</span> <span class="o">=</span> <span class="n">Trigger</span><span class="p">(</span><span class="n">channel</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">trigger_type</span><span class="o">=</span><span class="n">TRIGGER_NEW_PHOTO_WITH_HASHTAG</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="n">t3</span> <span class="o">=</span> <span class="n">Trigger</span><span class="p">(</span><span class="n">channel</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">trigger_type</span><span class="o">=</span><span class="n">TRIGGER_NEW_VIDEO</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="n">TriggerOutput</span><span class="p">(</span><span class="n">trigger</span><span class="o">=</span><span class="n">t1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="n">mime_type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="n">TriggerOutput</span><span class="p">(</span><span class="n">trigger</span><span class="o">=</span><span class="n">t1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;image_hd&quot;</span><span class="p">,</span> <span class="n">mime_type</span><span class="o">=</span><span class="s2">&quot;image&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="n">TriggerOutput</span><span class="p">(</span><span class="n">trigger</span><span class="o">=</span><span class="n">t1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;image_sd&quot;</span><span class="p">,</span> <span class="n">mime_type</span><span class="o">=</span><span class="s2">&quot;image&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="n">TriggerOutput</span><span class="p">(</span><span class="n">trigger</span><span class="o">=</span><span class="n">t1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;hashtags&quot;</span><span class="p">,</span> <span class="n">mime_type</span><span class="o">=</span><span class="s2">&quot;text[]&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">TriggerOutput</span><span class="p">(</span><span class="n">trigger</span><span class="o">=</span><span class="n">t3</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="n">mime_type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="n">TriggerOutput</span><span class="p">(</span><span class="n">trigger</span><span class="o">=</span><span class="n">t3</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;video_hd&quot;</span><span class="p">,</span> <span class="n">mime_type</span><span class="o">=</span><span class="s2">&quot;video&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Installiere Twitter-Channel:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">c</span> <span class="o">=</span> <span class="n">Channel</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;twitter&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="n">a1</span> <span class="o">=</span> <span class="n">Action</span><span class="p">(</span><span class="n">channel</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">action_type</span><span class="o">=</span><span class="n">ActionType</span><span class="o">.</span><span class="n">post_status</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="n">a2</span> <span class="o">=</span> <span class="n">Action</span><span class="p">(</span><span class="n">channel</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">action_type</span><span class="o">=</span><span class="n">ActionType</span><span class="o">.</span><span class="n">post_image</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="n">a3</span> <span class="o">=</span> <span class="n">Action</span><span class="p">(</span><span class="n">channel</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">action_type</span><span class="o">=</span><span class="n">ActionType</span><span class="o">.</span><span class="n">post_image_with_text</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="n">ActionInput</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="n">a1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;text_data&quot;</span><span class="p">,</span> <span class="n">mime_type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="n">ActionInput</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="n">a2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;image_data&quot;</span><span class="p">,</span> <span class="n">mime_type</span><span class="o">=</span><span class="s2">&quot;image&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="n">ActionInput</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="n">a3</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;text_data&quot;</span><span class="p">,</span> <span class="n">mime_type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="n">ActionInput</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="n">a3</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;image_data&quot;</span><span class="p">,</span> <span class="n">mime_type</span><span class="o">=</span><span class="s2">&quot;image&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="user-erstellt-rezept">
+<h2>User erstellt Rezept<a class="headerlink" href="#user-erstellt-rezept" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p class="first">User entscheidet sich für Trigger-Channel (Instagram)</p>
+<ul>
+<li><div class="first line-block">
+<div class="line">OAuth, falls nötig, d.h. Popup mit Seite
+<code class="docutils literal"><span class="pre">/channels/&lt;channelname&gt;/authenticate?next=&lt;current_url&gt;</span></code></div>
+<div class="line">... OAuth-Flow ...</div>
+<div class="line">Redirect zu &lt;current_url&gt;</div>
+</div>
+</li>
+</ul>
+</li>
+<li><p class="first">User entscheidet sich für Trigger (<code class="docutils literal"><span class="pre">TRIGGER_NEW_PHOTO</span></code>)</p>
+</li>
+<li><p class="first">User legt Werte für Trigger-Fields fest (keine bei Trigger <code class="docutils literal"><span class="pre">TRIGGER_NEW_PHOTO</span></code>)</p>
+</li>
+<li><p class="first">User entscheidet sich für Action-Channel</p>
+<ul class="simple">
+<li>OAuth, falls nötig, s.o.</li>
+</ul>
+</li>
+<li><p class="first">User entscheidet sich für Action (<code class="docutils literal"><span class="pre">ActionType.post_image_with_text</span></code>)</p>
+</li>
+<li><p class="first">User legt Action-Fields fest</p>
+<ul class="simple">
+<li>Je ActionInput für den ausgewählten Action Channel wird ein Textfeld
+angezeigt, in das Text und TriggerOutputs des ausgewählten Trigger
+Channels eingegeben werden. Diese Mappings werden mit dem Rezept
+gespeichert.</li>
+</ul>
+</li>
+<li><p class="first">Aufruf des trigger-channels, so dass der trigger-channel die Chance hat,
+evt. Überprüfungen vorzunehmen oder zusätzliche OAuth-Flows für erweiterte
+Permissions durchzuführen. Gibt <em>confirm</em> oder <em>cancel</em> zurück</p>
+</li>
+<li><p class="first">Aufruf des action-channels, dito.</p>
+</li>
+<li><p class="first">Abspeichern des Rezepts:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">save_recipe</span><span class="p">(</span><span class="n">trigger_name</span><span class="p">,</span> <span class="n">action_name</span><span class="p">,</span> <span class="n">mappings</span><span class="p">):</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">Trigger</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">trigger</span><span class="p">)</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">Action</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">action_name</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">Recipe</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">user</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">value</span> <span class="ow">in</span> <span class="n">mappings</span><span class="p">:</span>
+        <span class="n">RecipeMapping</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="rezept-wird-ausgefuhrt">
+<h2>Rezept wird ausgeführt<a class="headerlink" href="#rezept-wird-ausgefuhrt" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p class="first">Trigger-Channel wird getrigger (POST-Request von Instagram)</p>
+</li>
+<li><p class="first">falls nötig API Abruf (Metadaten zu Bild-ID aus POST-Request)</p>
+</li>
+<li><p class="first">Identifizierung des daisychain-Users (anhand der User-ID aus dem POST-Request)</p>
+</li>
+<li><p class="first">Weiterleitung des aufbereiteten Triggers an den Core:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">user_id</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">identifizierter_user</span><span class="o">&gt;.</span><span class="n">id</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="n">do_something</span><span class="p">(</span><span class="o">&lt;</span><span class="n">Metadaten</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="n">core</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">handle_trigger</span><span class="p">(</span><span class="s2">&quot;instagram&quot;</span><span class="p">,</span> <span class="n">TRIGGER_NEW_PHOTO</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">core.core.handle_trigger(...) stellt Aufgabe zum abarbeiten des Triggers in Celery-Queue:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">core</span><span class="o">.</span><span class="n">tasks</span><span class="o">.</span><span class="n">handle_trigger</span><span class="p">(</span><span class="o">...</span><span class="p">)</span><span class="o">.</span><span class="n">delay</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Celery-Worker bearbeitet Trigger, d.h. führt Funktion core.tasks.handle_trigger(...) aus:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">handle_trigger</span><span class="p">(</span><span class="n">channelid</span><span class="p">,</span> <span class="n">trigger</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">payload</span><span class="p">):</span>
+
+    <span class="c1"># Alle Rezept abrufen, die diesen Trigger nutzen</span>
+    <span class="n">recipes</span> <span class="o">=</span> <span class="n">Recipe</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">trigger</span><span class="o">=</span><span class="n">trigger</span><span class="p">)</span>
+
+    <span class="c1"># Falls keine Rezepte gefunden wurden, wird der for-Block nicht ausgeführt</span>
+    <span class="c1"># und der Worker endet sofort</span>
+    <span class="k">for</span> <span class="n">recipe</span> <span class="ow">in</span> <span class="n">recipes</span><span class="p">:</span>
+
+        <span class="c1"># inputs-dictionary befüllen</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Rezept-Mappings laden und inputs-dictionary vorbefüllen</span>
+        <span class="n">recipe_mappings</span> <span class="o">=</span> <span class="n">RecipeMapping</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">recipe</span><span class="o">=</span><span class="n">recipe</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">mapping</span> <span class="ow">in</span> <span class="n">recipe_mappings</span><span class="p">:</span>
+            <span class="n">inputs</span><span class="p">[</span><span class="n">mapping</span><span class="o">.</span><span class="n">actionInput</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">triggerOutput</span>
+
+        <span class="c1"># Tatsächliche Daten von trigger-channel befüllen lassen:</span>
+        <span class="n">trigger_channel</span> <span class="o">=</span> <span class="n">recipe</span><span class="o">.</span><span class="n">trigger</span><span class="o">.</span><span class="n">channel</span>
+        <span class="n">inputs_filled</span> <span class="o">=</span> <span class="n">trigger_channel</span><span class="o">.</span><span class="n">get_trigger_inputs</span><span class="p">(</span><span class="n">trigger</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+
+        <span class="c1"># action-channel mit befülltem inputs-dictionary aufrufen</span>
+        <span class="n">action_channel</span> <span class="o">=</span> <span class="n">recipe</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="n">channel</span>
+        <span class="n">action_channel</span><span class="o">.</span><span class="n">handle_action</span><span class="p">(</span><span class="n">recipe</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="n">action_type</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">inputs_filled</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Use Case</a><ul>
+<li><a class="reference internal" href="#setup">Setup</a></li>
+<li><a class="reference internal" href="#user-erstellt-rezept">User erstellt Rezept</a></li>
+<li><a class="reference internal" href="#rezept-wird-ausgefuhrt">Rezept wird ausgeführt</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="channel.html"
+                        title="previous chapter">Channels</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/use_case.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="channel.html" title="Channels"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">daisychain.me 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, luspr andreasmischke bor1e dmkif LittleBobbyTable.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.3.
+    </div>
+  </body>
+</html>

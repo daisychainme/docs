@@ -1,0 +1,125 @@
+Use Case
+========
+
+Diese Use Case Beschreibung stellt exemplarisch alle notwendigen Schritte da,
+die nötig sind, um von einer frisch installierten Daisychain-Instanz ausgehend
+ein Rezept auszuführen, dass bei jedem neuen Instagram-Foto dieses Foto 
+inklusive Beschreibung auf Twitter postet.
+
+Setup
+-----
+
+-   Installiere Instagram-Channel::
+
+        c = Channel(name="instagram").save()
+        t1 = Trigger(channel=c, trigger_type=TRIGGER_NEW_PHOTO).save()
+        t2 = Trigger(channel=c, trigger_type=TRIGGER_NEW_PHOTO_WITH_HASHTAG).save()
+        t3 = Trigger(channel=c, trigger_type=TRIGGER_NEW_VIDEO).save()
+        TriggerOutput(trigger=t1, name="description", mime_type="text").save()
+        TriggerOutput(trigger=t1, name="image_hd", mime_type="image").save()
+        TriggerOutput(trigger=t1, name="image_sd", mime_type="image").save()
+        TriggerOutput(trigger=t1, name="hashtags", mime_type="text[]").save()
+        (...)
+        TriggerOutput(trigger=t3, name="description", mime_type="text").save()
+        TriggerOutput(trigger=t3, name="video_hd", mime_type="video").save()
+
+-   Installiere Twitter-Channel::
+
+        c = Channel(name="twitter").save()
+        a1 = Action(channel=c, action_type=ActionType.post_status).save()
+        a2 = Action(channel=c, action_type=ActionType.post_image).save()
+        a3 = Action(channel=c, action_type=ActionType.post_image_with_text).save()
+        ActionInput(action=a1, name="text_data", mime_type="text").save()
+        ActionInput(action=a2, name="image_data", mime_type="image").save()
+        ActionInput(action=a3, name="text_data", mime_type="text").save()
+        ActionInput(action=a3, name="image_data", mime_type="image").save()
+
+User erstellt Rezept
+--------------------
+
+-   User entscheidet sich für Trigger-Channel (Instagram)
+
+    -   | OAuth, falls nötig, d.h. Popup mit Seite
+          ``/channels/<channelname>/authenticate?next=<current_url>``
+        | ... OAuth-Flow ...
+        | Redirect zu <current_url>
+
+-   User entscheidet sich für Trigger (``TRIGGER_NEW_PHOTO``)
+
+-   User legt Werte für Trigger-Fields fest (keine bei Trigger ``TRIGGER_NEW_PHOTO``)
+
+-   User entscheidet sich für Action-Channel
+
+    -   OAuth, falls nötig, s.o.
+
+-   User entscheidet sich für Action (``ActionType.post_image_with_text``)
+
+-   User legt Action-Fields fest
+
+    -   Je ActionInput für den ausgewählten Action Channel wird ein Textfeld
+        angezeigt, in das Text und TriggerOutputs des ausgewählten Trigger
+        Channels eingegeben werden. Diese Mappings werden mit dem Rezept
+        gespeichert.
+
+-   Aufruf des trigger-channels, so dass der trigger-channel die Chance hat,
+    evt. Überprüfungen vorzunehmen oder zusätzliche OAuth-Flows für erweiterte
+    Permissions durchzuführen. Gibt *confirm* oder *cancel* zurück
+
+-   Aufruf des action-channels, dito.
+
+-   Abspeichern des Rezepts::
+
+        def save_recipe(trigger_name, action_name, mappings):
+            t = Trigger.objects.get(trigger)
+            a = Action.objects.get(action_name)
+            r = Recipe(t, a, user).save()
+            for key,value in mappings:
+                RecipeMapping(r, value, key).save()
+
+
+Rezept wird ausgeführt
+----------------------
+
+-   Trigger-Channel wird getrigger (POST-Request von Instagram)
+
+-   falls nötig API Abruf (Metadaten zu Bild-ID aus POST-Request)
+
+-   Identifizierung des daisychain-Users (anhand der User-ID aus dem POST-Request)
+
+-   Weiterleitung des aufbereiteten Triggers an den Core::
+
+        user_id = <identifizierter_user>.id
+        payload = do_something(<Metadaten>)
+        core.core.handle_trigger("instagram", TRIGGER_NEW_PHOTO, user_id, payload)
+
+-   core.core.handle_trigger(...) stellt Aufgabe zum abarbeiten des Triggers in Celery-Queue::
+
+        core.tasks.handle_trigger(...).delay()
+
+-   Celery-Worker bearbeitet Trigger, d.h. führt Funktion core.tasks.handle_trigger(...) aus::
+
+        def handle_trigger(channelid, trigger, user_id, payload):
+
+            # Alle Rezept abrufen, die diesen Trigger nutzen
+            recipes = Recipe.objects.filter(trigger=trigger)
+
+            # Falls keine Rezepte gefunden wurden, wird der for-Block nicht ausgeführt
+            # und der Worker endet sofort
+            for recipe in recipes:
+
+                # inputs-dictionary befüllen
+                inputs = {}
+
+                # Rezept-Mappings laden und inputs-dictionary vorbefüllen
+                recipe_mappings = RecipeMapping.objects.filter(recipe=recipe)
+                for mapping in recipe_mappings:
+                    inputs[mapping.actionInput.name] = mapping.triggerOutput
+
+                # Tatsächliche Daten von trigger-channel befüllen lassen:
+                trigger_channel = recipe.trigger.channel
+                inputs_filled = trigger_channel.get_trigger_inputs(trigger, user_id, payload, inputs)
+
+                # action-channel mit befülltem inputs-dictionary aufrufen
+                action_channel = recipe.action.channel
+                action_channel.handle_action(recipe.action.action_type, user_id, inputs_filled)
+
