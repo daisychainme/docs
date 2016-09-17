@@ -52,28 +52,183 @@
   <div class="section" id="channels">
 <h1>Channels<a class="headerlink" href="#channels" title="Permalink to this headline">¶</a></h1>
 <p><em>Channels</em> are integrations with external services that can act as
-<span class="xref doc">trigger</span> or <span class="xref doc">action</span> in a <span class="xref doc">receipt</span>.</p>
+<span class="xref doc">trigger</span> or <span class="xref doc">action</span> in a <span class="xref doc">recipe</span>.</p>
 <div class="section" id="developing-a-channel">
 <h2>Developing a channel<a class="headerlink" href="#developing-a-channel" title="Permalink to this headline">¶</a></h2>
-<p>First of all a channel must inherit the core.Channel class and implement its
-methods. But there are a few more things to consider.</p>
+<p>You want to write a daisychain channel? Great! We encourage you to contribute
+to daisychain or to fork us on github. And developing a new channel is the
+perfect way to do so. However, you should follow some basic guidelines and
+conventions that are outlined by the following section. We recommend reading the
+whole section about the development of a channel before you start coding.</p>
+<div class="section" id="the-beginning">
+<h3>The beginning<a class="headerlink" href="#the-beginning" title="Permalink to this headline">¶</a></h3>
+<p>Daisychain&#8217;s channels are basically django apps. Therefore the easiest way to
+start the development process of your channel is by using <code class="docutils literal"><span class="pre">manage.py</span> <span class="pre">startapp</span>
+<span class="pre">&lt;channelname&gt;</span></code>. The name of a channel consists of the prefix <em>channel_</em>
+followed by the name of the service that is implemented. For example
+<em>channel_facebook</em> connects with Facebook, <em>channel_twitter</em> connects with
+Twitter, and so on.</p>
+</div>
 <div class="section" id="url-endpoints">
 <h3>URL endpoints<a class="headerlink" href="#url-endpoints" title="Permalink to this headline">¶</a></h3>
-<p>Every channel will need some way to authenticate the user against the external
-service. Therefore it should have a view called <code class="docutils literal"><span class="pre">authenticate</span></code>. It is
-recommended to call this url endpoint <code class="docutils literal"><span class="pre">/authenticate</span></code> but it does not
-necessarily need to, since internal linking is done via django url aliases:</p>
+<p>Most channels will need some setup process, e.g. authenticating the user
+against the external service. Therefore it should have a view called
+<code class="docutils literal"><span class="pre">connect</span></code>. It is recommended to call this url endpoint <code class="docutils literal"><span class="pre">/connect</span></code> but it
+does not necessarily need to, since internal linking is done via django url
+aliases:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># urls.py</span>
 
-<span class="c1"># Don&#39;t forget the appname!</span>
-<span class="n">app_name</span><span class="o">=</span><span class="s2">&quot;channel_instagram&quot;</span>
-
 <span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">url</span><span class="p">(</span><span class="s1">r&#39;^authenticate&#39;</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">AuthView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;authenticate&#39;</span><span class="p">),</span>
+    <span class="n">url</span><span class="p">(</span><span class="s1">r&#39;^connect&#39;</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">ConnectView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;connect&#39;</span><span class="p">),</span>
     <span class="o">...</span>
 <span class="p">]</span>
 </pre></div>
 </div>
+<p>For the other way round there should be a url endpoint called <code class="docutils literal"><span class="pre">disconnect</span></code>,
+pointing e.g. to <code class="docutils literal"><span class="pre">/disconnect</span></code> or whatever you like. This will be used if
+a user decides to no longer use that channel:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># urls.py</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="o">...</span>
+    <span class="n">url</span><span class="p">(</span><span class="s1">r&#39;^disconnect&#39;</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">DisconnectView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;disconnect&#39;</span><span class="p">),</span>
+    <span class="o">...</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="models">
+<h3>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h3>
+<p>Every channel may implement models that are internally needed. Channels that
+rely on the OAuth protocol to act on behalf of the user should implement a
+useraccount model that stores the access_tokens. The name of the useraccount
+model should be <em>&lt;Service&gt;Account</em> where <em>&lt;Service&gt;</em> is the service that is
+implemented by the channel.</p>
+<p>Consider the model GithubAccount that is used by the Github channel as an
+example:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># models.py</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="k">import</span> <span class="n">User</span>
+
+<span class="k">class</span> <span class="nc">GithubAccount</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+
+    <span class="n">user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span><span class="n">User</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">access_token</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You will always use a one-to-one relationship to the User model. Implement
+this relation using a <code class="docutils literal"><span class="pre">OneToOneField</span></code>.</p>
+</div>
+<div class="section" id="the-channel-class">
+<h3>The Channel class<a class="headerlink" href="#the-channel-class" title="Permalink to this headline">¶</a></h3>
+<p>Every channel <em>must</em> provide a class named <code class="docutils literal"><span class="pre">&lt;Service&gt;Channel</span></code> that is
+implemented in the module <code class="docutils literal"><span class="pre">daisychain/channel_&lt;service&gt;/channel.py</span></code>. This
+class inherits from <code class="docutils literal"><span class="pre">core.channel.Channel</span></code> and must implement its abstract
+methods:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">fill_recipe_mappings(trigger_type,</span> <span class="pre">userid,</span> <span class="pre">payload,</span> <span class="pre">conditions,</span> <span class="pre">mappings)</span></code>:
+Your implementation will be called if any of your triggers is used in a
+recipe and that recipe is executed right now. Your job is to fill the
+placeholders in the mappings-dictionary so the action of the current recipe
+can use your trigger outputs as inputs.</li>
+<li><code class="docutils literal"><span class="pre">handle_action(action_type,</span> <span class="pre">userid,</span> <span class="pre">inputs)</span></code>: This is the other side of
+the coin: One of your actions is used in a recipe. And your channel is
+called to execute the action.</li>
+<li><code class="docutils literal"><span class="pre">user_is_connected(user)</span></code>: There are some places where the daisychain-core
+needs to know, if the current user is able to use your channel, i.e. if
+the user is connected to your channel or not.</li>
+</ul>
+<p>Further it should override the optional methods that provide human readable
+summary for a given trigger or action including the user defined conditions
+or inputs. The synopses will be used in a If ... then ... sentence:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">trigger_synopsis(trigger_id,</span> <span class="pre">conditions)</span></code>: Might return something like
+»I post an image with hashtag &#8220;daisychain&#8221; on Instagram«</li>
+<li><code class="docutils literal"><span class="pre">action_synopsis(action_id,</span> <span class="pre">inputs)</span></code>: Might return something like »post
+the image to Twitter«</li>
+</ul>
+<p>These two outputs would be used as »If I post an image with hashtag &#8220;daisychain&#8221;
+on Instagram, post the image to Twitter«</p>
+<p>The <code class="docutils literal"><span class="pre">&lt;Service&gt;Channel</span></code> class encapsulates most of the logic that is needed by the
+channel. This is the place where you should implement the creation of webhooks
+or subscriptions as well as RESTful API calls to the external service.</p>
+<div class="section" id="the-method-fill-recipe-mappings">
+<h4>The method fill_recipe_mappings<a class="headerlink" href="#the-method-fill-recipe-mappings" title="Permalink to this headline">¶</a></h4>
+<p>The method fill recipe mappings is is called by worker threads defined in
+core.tasks when they
+process a trigger that was queued by the Channel via core.handle_trigger() and
+is needed to retrieve the data from the trigger that shall be handed over to the
+action
+<code class="docutils literal"><span class="pre">fill_recipe_mappings</span></code> expects the following arguments:</p>
+<ol class="arabic">
+<li><dl class="first docutils">
+<dt>an integer <code class="docutils literal"><span class="pre">trigger_type</span></code> as defined in the model field</dt>
+<dd><p class="first last">Trigger.trigger_type</p>
+</dd>
+</dl>
+</li>
+<li><p class="first">an integer userid: the user to whom the trigger belongs.</p>
+</li>
+<li><dl class="first docutils">
+<dt>a dictionary payload: the payload that was passed by the channel when</dt>
+<dd><p class="first last">queueing this trigger</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>a dictionary conditions: the conditions that have to be satisfied. For</dt>
+<dd><p class="first last">each recipe condition there is a key equal to the &#8220;name&#8221;
+attribute of the corresponding TriggerInput</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>a dictionary called <code class="docutils literal"><span class="pre">mappings</span></code>.</dt>
+<dd><p class="first last">This dictionary contains the data that shall be passed from the trigger channel
+to the action channel as a key-value mapping. The keys of the dictionary are
+used by the action channel to get the data needed. The values are placeholders
+and have to to be replaced. The placeholders are in string.format() format,
+i.e. <code class="docutils literal"><span class="pre">{&lt;key&gt;}</span></code> with &lt;key&gt; being known by the trigger channel.</p>
+</dd>
+</dl>
+</li>
+</ol>
+<p>If the channel you are implementing only provides actions it does not have to
+implement this method.</p>
+</div>
+<div class="section" id="the-method-handle-action">
+<h4>The method handle_action<a class="headerlink" href="#the-method-handle-action" title="Permalink to this headline">¶</a></h4>
+<p><code class="docutils literal"><span class="pre">handle_action</span></code>  executes a specific action after the corresponding trigger
+event has taken place. This method is called by a worker thread.</p>
+<p>Arguments:</p>
+<ol class="arabic">
+<li><dl class="first docutils">
+<dt>an integer <code class="docutils literal"><span class="pre">action_type</span></code> that denotes the action that should be executed.</dt>
+<dd><p class="first last">It corresponds to the value defined in core.models.Action.</p>
+</dd>
+</dl>
+</li>
+<li><p class="first">an integer <code class="docutils literal"><span class="pre">userid</span></code>: the id of the user to whom the action belongs.</p>
+</li>
+<li><dl class="first docutils">
+<dt>a dictionary <code class="docutils literal"><span class="pre">inputs</span></code> that has previosly been filled by a call to</dt>
+<dd><p class="first last"><code class="docutils literal"><span class="pre">fill_recipe_mappings</span></code>. It countains the values that are needed to
+perform the action denoted by action_type. The values of the input
+dictionary are defined by the field <em>name</em> of the model
+<code class="docutils literal"><span class="pre">core.models.ActionInput</span></code>.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="defining-triggers-and-actions">
+<h3>Defining triggers and actions<a class="headerlink" href="#defining-triggers-and-actions" title="Permalink to this headline">¶</a></h3>
+<p>The Triggers and actions of a channel are defined by the database entries of
+the tables core.models.Action and core.models.Trigger. These models have to be
+in the database when the server starts. You should define them as fixtures.</p>
+</div>
+<div class="section" id="the-views-of-a-channel">
+<h3>The views of a channel<a class="headerlink" href="#the-views-of-a-channel" title="Permalink to this headline">¶</a></h3>
 </div>
 </div>
 </div>
@@ -88,7 +243,16 @@ necessarily need to, since internal linking is done via django url aliases:</p>
   <ul>
 <li><a class="reference internal" href="#">Channels</a><ul>
 <li><a class="reference internal" href="#developing-a-channel">Developing a channel</a><ul>
+<li><a class="reference internal" href="#the-beginning">The beginning</a></li>
 <li><a class="reference internal" href="#url-endpoints">URL endpoints</a></li>
+<li><a class="reference internal" href="#models">Models</a></li>
+<li><a class="reference internal" href="#the-channel-class">The Channel class</a><ul>
+<li><a class="reference internal" href="#the-method-fill-recipe-mappings">The method fill_recipe_mappings</a></li>
+<li><a class="reference internal" href="#the-method-handle-action">The method handle_action</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#defining-triggers-and-actions">Defining triggers and actions</a></li>
+<li><a class="reference internal" href="#the-views-of-a-channel">The views of a channel</a></li>
 </ul>
 </li>
 </ul>

@@ -2,32 +2,170 @@ Channels
 ========
 
 *Channels* are integrations with external services that can act as
-:doc:`trigger` or :doc:`action` in a :doc:`receipt`.
+:doc:`trigger` or :doc:`action` in a :doc:`recipe`.
 
 Developing a channel
 --------------------
 
-First of all a channel must inherit the core.Channel class and implement its
-methods. But there are a few more things to consider.
+You want to write a daisychain channel? Great! We encourage you to contribute
+to daisychain or to fork us on github. And developing a new channel is the
+perfect way to do so. However, you should follow some basic guidelines and
+conventions that are outlined by the following section. We recommend reading the
+whole section about the development of a channel before you start coding.
+
+
+The beginning
+"""""""""""""
+
+Daisychain's channels are basically django apps. Therefore the easiest way to
+start the development process of your channel is by using ``manage.py startapp
+<channelname>``. The name of a channel consists of the prefix *channel_*
+followed by the name of the service that is implemented. For example
+*channel_facebook* connects with Facebook, *channel_twitter* connects with
+Twitter, and so on.
+
 
 URL endpoints
 """""""""""""
 
-Every channel will need some way to authenticate the user against the external
-service. Therefore it should have a view called ``authenticate``. It is
-recommended to call this url endpoint ``/authenticate`` but it does not
-necessarily need to, since internal linking is done via django url aliases::
+Most channels will need some setup process, e.g. authenticating the user
+against the external service. Therefore it should have a view called
+``connect``. It is recommended to call this url endpoint ``/connect`` but it
+does not necessarily need to, since internal linking is done via django url
+aliases::
 
     # urls.py
 
-    # Don't forget the appname!
-    app_name="channel_instagram"
+    urlpatterns = [
+        url(r'^connect', views.ConnectView.as_view(), name='connect'),
+        ...
+    ]
+
+For the other way round there should be a url endpoint called ``disconnect``,
+pointing e.g. to ``/disconnect`` or whatever you like. This will be used if
+a user decides to no longer use that channel::
+
+    # urls.py
 
     urlpatterns = [
-        url(r'^authenticate', views.AuthView.as_view(), name='authenticate'),
+        ...
+        url(r'^disconnect', views.DisconnectView.as_view(), name='disconnect'),
         ...
     ]
 
 
+Models
+""""""
+
+Every channel may implement models that are internally needed. Channels that
+rely on the OAuth protocol to act on behalf of the user should implement a
+useraccount model that stores the access_tokens. The name of the useraccount
+model should be *<Service>Account* where *<Service>* is the service that is
+implemented by the channel.
+
+Consider the model GithubAccount that is used by the Github channel as an
+example::
+
+    # models.py
+    from django.contrib.auth.models import User
+
+    class GithubAccount(models.Model):
+
+        user = models.OneToOneField(User, on_delete=models.CASCADE)
+        access_token = models.CharField(max_length=100)
+
+You will always use a one-to-one relationship to the User model. Implement
+this relation using a ``OneToOneField``.
 
 
+The Channel class
+"""""""""""""""""
+
+Every channel *must* provide a class named ``<Service>Channel`` that is
+implemented in the module ``daisychain/channel_<service>/channel.py``. This
+class inherits from ``core.channel.Channel`` and must implement its abstract
+methods:
+
+-   ``fill_recipe_mappings(trigger_type, userid, payload, conditions, mappings)``:
+    Your implementation will be called if any of your triggers is used in a
+    recipe and that recipe is executed right now. Your job is to fill the
+    placeholders in the mappings-dictionary so the action of the current recipe
+    can use your trigger outputs as inputs.
+-   ``handle_action(action_type, userid, inputs)``: This is the other side of
+    the coin: One of your actions is used in a recipe. And your channel is
+    called to execute the action.
+-   ``user_is_connected(user)``: There are some places where the daisychain-core
+    needs to know, if the current user is able to use your channel, i.e. if
+    the user is connected to your channel or not.
+
+Further it should override the optional methods that provide human readable
+summary for a given trigger or action including the user defined conditions
+or inputs. The synopses will be used in a If ... then ... sentence:
+
+-   ``trigger_synopsis(trigger_id, conditions)``: Might return something like
+    »I post an image with hashtag "daisychain" on Instagram«
+-   ``action_synopsis(action_id, inputs)``: Might return something like »post
+    the image to Twitter«
+
+These two outputs would be used as »If I post an image with hashtag "daisychain"
+on Instagram, post the image to Twitter«
+
+The ``<Service>Channel`` class encapsulates most of the logic that is needed by the
+channel. This is the place where you should implement the creation of webhooks
+or subscriptions as well as RESTful API calls to the external service.
+
+
+The method fill_recipe_mappings
+''''''''''''''''''''''''''''''
+The method fill recipe mappings is is called by worker threads defined in
+core.tasks when they
+process a trigger that was queued by the Channel via core.handle_trigger() and
+is needed to retrieve the data from the trigger that shall be handed over to the
+action
+``fill_recipe_mappings`` expects the following arguments:
+
+#. an integer ``trigger_type`` as defined in the model field
+    Trigger.trigger_type
+#. an integer userid: the user to whom the trigger belongs.
+#. a dictionary payload: the payload that was passed by the channel when
+    queueing this trigger
+#. a dictionary conditions: the conditions that have to be satisfied. For
+                each recipe condition there is a key equal to the "name"
+                attribute of the corresponding TriggerInput
+#. a dictionary called ``mappings``.
+    This dictionary contains the data that shall be passed from the trigger channel
+    to the action channel as a key-value mapping. The keys of the dictionary are
+    used by the action channel to get the data needed. The values are placeholders
+    and have to to be replaced. The placeholders are in string.format() format,
+    i.e. ``{<key>}`` with <key> being known by the trigger channel.
+
+If the channel you are implementing only provides actions it does not have to
+implement this method.
+
+
+The method handle_action
+'''''''''''''''''''''''
+``handle_action``  executes a specific action after the corresponding trigger
+event has taken place. This method is called by a worker thread.
+
+Arguments:
+
+#. an integer ``action_type`` that denotes the action that should be executed.
+    It corresponds to the value defined in core.models.Action.
+#. an integer ``userid``: the id of the user to whom the action belongs.
+#. a dictionary ``inputs`` that has previosly been filled by a call to
+    ``fill_recipe_mappings``. It countains the values that are needed to
+    perform the action denoted by action_type. The values of the input
+    dictionary are defined by the field *name* of the model
+    ``core.models.ActionInput``.
+
+
+Defining triggers and actions
+"""""""""""""""""""""""""""""
+
+The Triggers and actions of a channel are defined by the database entries of
+the tables core.models.Action and core.models.Trigger. These models have to be
+in the database when the server starts. You should define them as fixtures.
+
+The views of a channel
+""""""""""""""""""""""

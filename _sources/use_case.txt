@@ -1,17 +1,16 @@
 Use Case
 ========
 
-Diese Use Case Beschreibung stellt exemplarisch alle notwendigen Schritte da,
-die nötig sind, um von einer frisch installierten Daisychain-Instanz ausgehend
-ein Rezept auszuführen, dass bei jedem neuen Instagram-Foto dieses Foto 
-inklusive Beschreibung auf Twitter postet.
+This use case description shows all necessary steps to execute a recipe that
+posts every new Instagram photo including the caption to Twitter starting from
+a fresh installed daisychain server instance.
 
 Setup
 -----
 
--   Installiere Instagram-Channel::
+-   Install the Instagram channel::
 
-        c = Channel(name="instagram").save()
+        c = Channel(name="Instagram").save()
         t1 = Trigger(channel=c, trigger_type=TRIGGER_NEW_PHOTO).save()
         t2 = Trigger(channel=c, trigger_type=TRIGGER_NEW_PHOTO_WITH_HASHTAG).save()
         t3 = Trigger(channel=c, trigger_type=TRIGGER_NEW_VIDEO).save()
@@ -23,7 +22,7 @@ Setup
         TriggerOutput(trigger=t3, name="description", mime_type="text").save()
         TriggerOutput(trigger=t3, name="video_hd", mime_type="video").save()
 
--   Installiere Twitter-Channel::
+-   Install the Twitter channel::
 
         c = Channel(name="twitter").save()
         a1 = Action(channel=c, action_type=ActionType.post_status).save()
@@ -34,40 +33,42 @@ Setup
         ActionInput(action=a3, name="text_data", mime_type="text").save()
         ActionInput(action=a3, name="image_data", mime_type="image").save()
 
-User erstellt Rezept
---------------------
+Recipe creation
+---------------
 
--   User entscheidet sich für Trigger-Channel (Instagram)
+-   User chooses a trigger channel (Instagram)
 
-    -   | OAuth, falls nötig, d.h. Popup mit Seite
-          ``/channels/<channelname>/authenticate?next=<current_url>``
+    -   | OAuth, if necessary, i.e. redirect to channel page
+          ``/<channelname>/authenticate?next=<current_url>``
         | ... OAuth-Flow ...
-        | Redirect zu <current_url>
+        | Redirect to <current_url>
 
--   User entscheidet sich für Trigger (``TRIGGER_NEW_PHOTO``)
+-   User chooses a trigger (``TRIGGER_NEW_PHOTO``)
 
--   User legt Werte für Trigger-Fields fest (keine bei Trigger ``TRIGGER_NEW_PHOTO``)
+-   User defines the values for trigger input (e.g. the hashtag which has to
+    be in the caption), not needed in this use case
 
--   User entscheidet sich für Action-Channel
+-   User chooses an action channel (Twitter)
 
-    -   OAuth, falls nötig, s.o.
+    -   OAuth, if necessary, see above
 
--   User entscheidet sich für Action (``ActionType.post_image_with_text``)
+-   User chooses an action (``ActionType.post_image_with_text``)
 
--   User legt Action-Fields fest
+-   User defines values for action mappings
 
-    -   Je ActionInput für den ausgewählten Action Channel wird ein Textfeld
-        angezeigt, in das Text und TriggerOutputs des ausgewählten Trigger
-        Channels eingegeben werden. Diese Mappings werden mit dem Rezept
-        gespeichert.
+    -   For each action input of the chosen action there will be displayed one
+        input field where trigger outputs of the chosen trigger can be selected
+        and for specific fields can be extended with generic text. These
+        mappings are stored with the recipe
 
--   Aufruf des trigger-channels, so dass der trigger-channel die Chance hat,
-    evt. Überprüfungen vorzunehmen oder zusätzliche OAuth-Flows für erweiterte
-    Permissions durchzuführen. Gibt *confirm* oder *cancel* zurück
+-   The trigger channel is called so it may execute additional steps to make
+    the chosen trigger possible, e.g. request additional permissions via OAuth
+    or do some plausibility checks. It then should return with *confirm* or
+    *cancel*
 
--   Aufruf des action-channels, dito.
+-   The action channel is called the same way.
 
--   Abspeichern des Rezepts::
+-   Storing the recipe::
 
         def save_recipe(trigger_name, action_name, mappings):
             t = Trigger.objects.get(trigger)
@@ -77,49 +78,50 @@ User erstellt Rezept
                 RecipeMapping(r, value, key).save()
 
 
-Rezept wird ausgeführt
-----------------------
+Executing the recipe
+--------------------
 
--   Trigger-Channel wird getrigger (POST-Request von Instagram)
+-   Trigger channel is triggered (POST request by Instagram)
 
--   falls nötig API Abruf (Metadaten zu Bild-ID aus POST-Request)
+-   Some API calls to Instagram to get metadata to the trigger POST request
 
--   Identifizierung des daisychain-Users (anhand der User-ID aus dem POST-Request)
+-   Identifying the daisychain-user (based on the Instagram user ID)
 
--   Weiterleitung des aufbereiteten Triggers an den Core::
+-   Queue the trigger with some metadata in the core::
 
         user_id = <identifizierter_user>.id
         payload = do_something(<Metadaten>)
         core.core.handle_trigger("instagram", TRIGGER_NEW_PHOTO, user_id, payload)
 
--   core.core.handle_trigger(...) stellt Aufgabe zum abarbeiten des Triggers in Celery-Queue::
+-   core.Core.handle_trigger(...) queues the task in the Celery queue::
 
         core.tasks.handle_trigger(...).delay()
 
--   Celery-Worker bearbeitet Trigger, d.h. führt Funktion core.tasks.handle_trigger(...) aus::
+-   Celery worker processes trigger, i.e. executes
+    core.tasks.handle_trigger(...)::
 
         def handle_trigger(channelid, trigger, user_id, payload):
 
-            # Alle Rezept abrufen, die diesen Trigger nutzen
-            recipes = Recipe.objects.filter(trigger=trigger)
+            # Get all recipes by the user that use this trigger
+            recipes = Recipe.objects.filter(user=user_id, trigger=trigger)
 
-            # Falls keine Rezepte gefunden wurden, wird der for-Block nicht ausgeführt
-            # und der Worker endet sofort
+            # If no recipes are found, the for block will not be executed and
+            # the worker terminates
             for recipe in recipes:
 
-                # inputs-dictionary befüllen
+                # fill inputs-dictionary
                 inputs = {}
 
-                # Rezept-Mappings laden und inputs-dictionary vorbefüllen
+                # load recipe mappings and pre fill inputs dictionary
                 recipe_mappings = RecipeMapping.objects.filter(recipe=recipe)
                 for mapping in recipe_mappings:
                     inputs[mapping.actionInput.name] = mapping.triggerOutput
 
-                # Tatsächliche Daten von trigger-channel befüllen lassen:
+                # get the real data from the trigger channel
                 trigger_channel = recipe.trigger.channel
                 inputs_filled = trigger_channel.get_trigger_inputs(trigger, user_id, payload, inputs)
 
-                # action-channel mit befülltem inputs-dictionary aufrufen
+                # call the action channel with the filled inputs dictionary
                 action_channel = recipe.action.channel
                 action_channel.handle_action(recipe.action.action_type, user_id, inputs_filled)
 

@@ -47,15 +47,14 @@
             
   <div class="section" id="use-case">
 <h1>Use Case<a class="headerlink" href="#use-case" title="Permalink to this headline">¶</a></h1>
-<p>Diese Use Case Beschreibung stellt exemplarisch alle notwendigen Schritte da,
-die nötig sind, um von einer frisch installierten Daisychain-Instanz ausgehend
-ein Rezept auszuführen, dass bei jedem neuen Instagram-Foto dieses Foto
-inklusive Beschreibung auf Twitter postet.</p>
+<p>This use case description shows all necessary steps to execute a recipe that
+posts every new Instagram photo including the caption to Twitter starting from
+a fresh installed daisychain server instance.</p>
 <div class="section" id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p class="first">Installiere Instagram-Channel:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">c</span> <span class="o">=</span> <span class="n">Channel</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;instagram&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<li><p class="first">Install the Instagram channel:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">c</span> <span class="o">=</span> <span class="n">Channel</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Instagram&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 <span class="n">t1</span> <span class="o">=</span> <span class="n">Trigger</span><span class="p">(</span><span class="n">channel</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">trigger_type</span><span class="o">=</span><span class="n">TRIGGER_NEW_PHOTO</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 <span class="n">t2</span> <span class="o">=</span> <span class="n">Trigger</span><span class="p">(</span><span class="n">channel</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">trigger_type</span><span class="o">=</span><span class="n">TRIGGER_NEW_PHOTO_WITH_HASHTAG</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 <span class="n">t3</span> <span class="o">=</span> <span class="n">Trigger</span><span class="p">(</span><span class="n">channel</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">trigger_type</span><span class="o">=</span><span class="n">TRIGGER_NEW_VIDEO</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
@@ -69,7 +68,7 @@ inklusive Beschreibung auf Twitter postet.</p>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Installiere Twitter-Channel:</p>
+<li><p class="first">Install the Twitter channel:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">c</span> <span class="o">=</span> <span class="n">Channel</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;twitter&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 <span class="n">a1</span> <span class="o">=</span> <span class="n">Action</span><span class="p">(</span><span class="n">channel</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">action_type</span><span class="o">=</span><span class="n">ActionType</span><span class="o">.</span><span class="n">post_status</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 <span class="n">a2</span> <span class="o">=</span> <span class="n">Action</span><span class="p">(</span><span class="n">channel</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">action_type</span><span class="o">=</span><span class="n">ActionType</span><span class="o">.</span><span class="n">post_image</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
@@ -83,46 +82,48 @@ inklusive Beschreibung auf Twitter postet.</p>
 </li>
 </ul>
 </div>
-<div class="section" id="user-erstellt-rezept">
-<h2>User erstellt Rezept<a class="headerlink" href="#user-erstellt-rezept" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="recipe-creation">
+<h2>Recipe creation<a class="headerlink" href="#recipe-creation" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p class="first">User entscheidet sich für Trigger-Channel (Instagram)</p>
+<li><p class="first">User chooses a trigger channel (Instagram)</p>
 <ul>
 <li><div class="first line-block">
-<div class="line">OAuth, falls nötig, d.h. Popup mit Seite
-<code class="docutils literal"><span class="pre">/channels/&lt;channelname&gt;/authenticate?next=&lt;current_url&gt;</span></code></div>
+<div class="line">OAuth, if necessary, i.e. redirect to channel page
+<code class="docutils literal"><span class="pre">/&lt;channelname&gt;/authenticate?next=&lt;current_url&gt;</span></code></div>
 <div class="line">... OAuth-Flow ...</div>
-<div class="line">Redirect zu &lt;current_url&gt;</div>
+<div class="line">Redirect to &lt;current_url&gt;</div>
 </div>
 </li>
 </ul>
 </li>
-<li><p class="first">User entscheidet sich für Trigger (<code class="docutils literal"><span class="pre">TRIGGER_NEW_PHOTO</span></code>)</p>
+<li><p class="first">User chooses a trigger (<code class="docutils literal"><span class="pre">TRIGGER_NEW_PHOTO</span></code>)</p>
 </li>
-<li><p class="first">User legt Werte für Trigger-Fields fest (keine bei Trigger <code class="docutils literal"><span class="pre">TRIGGER_NEW_PHOTO</span></code>)</p>
+<li><p class="first">User defines the values for trigger input (e.g. the hashtag which has to
+be in the caption), not needed in this use case</p>
 </li>
-<li><p class="first">User entscheidet sich für Action-Channel</p>
+<li><p class="first">User chooses an action channel (Twitter)</p>
 <ul class="simple">
-<li>OAuth, falls nötig, s.o.</li>
+<li>OAuth, if necessary, see above</li>
 </ul>
 </li>
-<li><p class="first">User entscheidet sich für Action (<code class="docutils literal"><span class="pre">ActionType.post_image_with_text</span></code>)</p>
+<li><p class="first">User chooses an action (<code class="docutils literal"><span class="pre">ActionType.post_image_with_text</span></code>)</p>
 </li>
-<li><p class="first">User legt Action-Fields fest</p>
+<li><p class="first">User defines values for action mappings</p>
 <ul class="simple">
-<li>Je ActionInput für den ausgewählten Action Channel wird ein Textfeld
-angezeigt, in das Text und TriggerOutputs des ausgewählten Trigger
-Channels eingegeben werden. Diese Mappings werden mit dem Rezept
-gespeichert.</li>
+<li>For each action input of the chosen action there will be displayed one
+input field where trigger outputs of the chosen trigger can be selected
+and for specific fields can be extended with generic text. These
+mappings are stored with the recipe</li>
 </ul>
 </li>
-<li><p class="first">Aufruf des trigger-channels, so dass der trigger-channel die Chance hat,
-evt. Überprüfungen vorzunehmen oder zusätzliche OAuth-Flows für erweiterte
-Permissions durchzuführen. Gibt <em>confirm</em> oder <em>cancel</em> zurück</p>
+<li><p class="first">The trigger channel is called so it may execute additional steps to make
+the chosen trigger possible, e.g. request additional permissions via OAuth
+or do some plausibility checks. It then should return with <em>confirm</em> or
+<em>cancel</em></p>
 </li>
-<li><p class="first">Aufruf des action-channels, dito.</p>
+<li><p class="first">The action channel is called the same way.</p>
 </li>
-<li><p class="first">Abspeichern des Rezepts:</p>
+<li><p class="first">Storing the recipe:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">save_recipe</span><span class="p">(</span><span class="n">trigger_name</span><span class="p">,</span> <span class="n">action_name</span><span class="p">,</span> <span class="n">mappings</span><span class="p">):</span>
     <span class="n">t</span> <span class="o">=</span> <span class="n">Trigger</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">trigger</span><span class="p">)</span>
     <span class="n">a</span> <span class="o">=</span> <span class="n">Action</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">action_name</span><span class="p">)</span>
@@ -134,50 +135,51 @@ Permissions durchzuführen. Gibt <em>confirm</em> oder <em>cancel</em> zurück</
 </li>
 </ul>
 </div>
-<div class="section" id="rezept-wird-ausgefuhrt">
-<h2>Rezept wird ausgeführt<a class="headerlink" href="#rezept-wird-ausgefuhrt" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="executing-the-recipe">
+<h2>Executing the recipe<a class="headerlink" href="#executing-the-recipe" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p class="first">Trigger-Channel wird getrigger (POST-Request von Instagram)</p>
+<li><p class="first">Trigger channel is triggered (POST request by Instagram)</p>
 </li>
-<li><p class="first">falls nötig API Abruf (Metadaten zu Bild-ID aus POST-Request)</p>
+<li><p class="first">Some API calls to Instagram to get metadata to the trigger POST request</p>
 </li>
-<li><p class="first">Identifizierung des daisychain-Users (anhand der User-ID aus dem POST-Request)</p>
+<li><p class="first">Identifying the daisychain-user (based on the Instagram user ID)</p>
 </li>
-<li><p class="first">Weiterleitung des aufbereiteten Triggers an den Core:</p>
+<li><p class="first">Queue the trigger with some metadata in the core:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">user_id</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">identifizierter_user</span><span class="o">&gt;.</span><span class="n">id</span>
 <span class="n">payload</span> <span class="o">=</span> <span class="n">do_something</span><span class="p">(</span><span class="o">&lt;</span><span class="n">Metadaten</span><span class="o">&gt;</span><span class="p">)</span>
 <span class="n">core</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">handle_trigger</span><span class="p">(</span><span class="s2">&quot;instagram&quot;</span><span class="p">,</span> <span class="n">TRIGGER_NEW_PHOTO</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">core.core.handle_trigger(...) stellt Aufgabe zum abarbeiten des Triggers in Celery-Queue:</p>
+<li><p class="first">core.Core.handle_trigger(...) queues the task in the Celery queue:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">core</span><span class="o">.</span><span class="n">tasks</span><span class="o">.</span><span class="n">handle_trigger</span><span class="p">(</span><span class="o">...</span><span class="p">)</span><span class="o">.</span><span class="n">delay</span><span class="p">()</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Celery-Worker bearbeitet Trigger, d.h. führt Funktion core.tasks.handle_trigger(...) aus:</p>
+<li><p class="first">Celery worker processes trigger, i.e. executes
+core.tasks.handle_trigger(...):</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">handle_trigger</span><span class="p">(</span><span class="n">channelid</span><span class="p">,</span> <span class="n">trigger</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">payload</span><span class="p">):</span>
 
-    <span class="c1"># Alle Rezept abrufen, die diesen Trigger nutzen</span>
-    <span class="n">recipes</span> <span class="o">=</span> <span class="n">Recipe</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">trigger</span><span class="o">=</span><span class="n">trigger</span><span class="p">)</span>
+    <span class="c1"># Get all recipes by the user that use this trigger</span>
+    <span class="n">recipes</span> <span class="o">=</span> <span class="n">Recipe</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">user_id</span><span class="p">,</span> <span class="n">trigger</span><span class="o">=</span><span class="n">trigger</span><span class="p">)</span>
 
-    <span class="c1"># Falls keine Rezepte gefunden wurden, wird der for-Block nicht ausgeführt</span>
-    <span class="c1"># und der Worker endet sofort</span>
+    <span class="c1"># If no recipes are found, the for block will not be executed and</span>
+    <span class="c1"># the worker terminates</span>
     <span class="k">for</span> <span class="n">recipe</span> <span class="ow">in</span> <span class="n">recipes</span><span class="p">:</span>
 
-        <span class="c1"># inputs-dictionary befüllen</span>
+        <span class="c1"># fill inputs-dictionary</span>
         <span class="n">inputs</span> <span class="o">=</span> <span class="p">{}</span>
 
-        <span class="c1"># Rezept-Mappings laden und inputs-dictionary vorbefüllen</span>
+        <span class="c1"># load recipe mappings and pre fill inputs dictionary</span>
         <span class="n">recipe_mappings</span> <span class="o">=</span> <span class="n">RecipeMapping</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">recipe</span><span class="o">=</span><span class="n">recipe</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">mapping</span> <span class="ow">in</span> <span class="n">recipe_mappings</span><span class="p">:</span>
             <span class="n">inputs</span><span class="p">[</span><span class="n">mapping</span><span class="o">.</span><span class="n">actionInput</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">triggerOutput</span>
 
-        <span class="c1"># Tatsächliche Daten von trigger-channel befüllen lassen:</span>
+        <span class="c1"># get the real data from the trigger channel</span>
         <span class="n">trigger_channel</span> <span class="o">=</span> <span class="n">recipe</span><span class="o">.</span><span class="n">trigger</span><span class="o">.</span><span class="n">channel</span>
         <span class="n">inputs_filled</span> <span class="o">=</span> <span class="n">trigger_channel</span><span class="o">.</span><span class="n">get_trigger_inputs</span><span class="p">(</span><span class="n">trigger</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
 
-        <span class="c1"># action-channel mit befülltem inputs-dictionary aufrufen</span>
+        <span class="c1"># call the action channel with the filled inputs dictionary</span>
         <span class="n">action_channel</span> <span class="o">=</span> <span class="n">recipe</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="n">channel</span>
         <span class="n">action_channel</span><span class="o">.</span><span class="n">handle_action</span><span class="p">(</span><span class="n">recipe</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="n">action_type</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">inputs_filled</span><span class="p">)</span>
 </pre></div>
@@ -197,8 +199,8 @@ Permissions durchzuführen. Gibt <em>confirm</em> oder <em>cancel</em> zurück</
   <ul>
 <li><a class="reference internal" href="#">Use Case</a><ul>
 <li><a class="reference internal" href="#setup">Setup</a></li>
-<li><a class="reference internal" href="#user-erstellt-rezept">User erstellt Rezept</a></li>
-<li><a class="reference internal" href="#rezept-wird-ausgefuhrt">Rezept wird ausgeführt</a></li>
+<li><a class="reference internal" href="#recipe-creation">Recipe creation</a></li>
+<li><a class="reference internal" href="#executing-the-recipe">Executing the recipe</a></li>
 </ul>
 </li>
 </ul>
